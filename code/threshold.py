@@ -1,12 +1,16 @@
+#!/usr/bin/python3.5
+from statistics import mean, stdev
 import os
 import sys
 import getopt
 
+###PSUEDO###
 # For each day...
 # For every team...
 # For every CSV...
 ## For every line...
 ## if rate meets a threshold, grab that record and write it to output file
+###/PSUEDO###
 
 ###VARS###
 thresh = 700
@@ -27,20 +31,24 @@ def threshTeam(csvPath, outFile, team):
 
     total = 0.0
     overThresh = 0.0
+    rates = []
     for fn in os.listdir(inDir):
         for line in open(inDir+fn,'r'):
+            rate = float(line.split(',')[4])
+            rates.append(rate)
             total+=1
-            if line.split(',')[4] > thresh:
+            if float(rate) > thresh:
                 outFile.write(line)
                 overThresh+=1
-    outFile.write("Percentage over threshold: %f" % (overThresh/total))
+    outFile.write("Percentage over threshold: %f\n" % (overThresh/total))
+    outFile.write("Overall Average: %f\n" % mean(rates))
+    outFile.write("Standard Deviation: %f\n" % stdev(rates))
 
     print
 
 
 def threshDay(csvPath,outFile):
     for fn in os.listdir(os.getcwd()+csvPath):
-        print fn
         threshTeam(csvPath+'/'+fn, outFile, fn)
 
     
@@ -94,4 +102,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
