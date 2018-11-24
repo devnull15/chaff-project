@@ -97,7 +97,8 @@ def makeCSVTeam(silkPath, team):
                             '--pass-destination=stdout', inAbsPath]             
              rwfilter = subprocess.Popen(rwfiltercmd, stdout=subprocess.PIPE, shell=False)
              rwuniqcmd = ['rwuniq', '--plugin=flowrate.so', '--bin-time=1',
-                          '--fields=sip,dip,stime,etime', '--values=pckts/sec', '--sort-output']
+                          '--fields=sip,dip,sport,dport,protocol,stime,etime',
+                          '--values=pckts/sec', '--sort-output']
              rwuniq = subprocess.Popen(rwuniqcmd, stdin=rwfilter.stdout,
                                        stdout=subprocess.PIPE, shell=False)
              grepcmd = ['grep', '-v', 'sIP']
@@ -164,8 +165,8 @@ def main(argv):
     else:
         silkPath = '/silk/' + argv[0] + '/'
         cleanCSVs()
-        #makeCSVDEFCON(silkPath)
-        makeCSVDAY(silkPath)
+        makeCSVDEFCON(silkPath)
+        #makeCSVDAY(silkPath)
         #makeCSVTeam(silkPath
 
         #makeHistograms(outDir) # these aren't very helpful...

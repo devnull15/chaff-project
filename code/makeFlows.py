@@ -49,5 +49,5 @@ if __name__ == "__main__":
         print("Usage: python makeFlow.py <dir path>")
         sys.exit()
     else:
-        makeFlowDay('/'+sys.argv[1])
-        #makeFlowDEFCON(sys.argv[1])
+        #makeFlowDay('/'+sys.argv[1])
+        makeFlowDEFCON(sys.argv[1])

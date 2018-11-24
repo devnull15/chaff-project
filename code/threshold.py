@@ -1,141 +1,64 @@
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import numpy as np
 import os
 import sys
-import subprocess
-import shutil
 import getopt
 
-## VARS ##
-addrs = {'Samurai': '10.5.6.2',
-         'PPP': '10.5.1.2',
-         '[Technopandas]': '10.5.2.2',
-         'raon_ASRT': '10.5.4.2',
-         'pwnies': '10.5.5.2',
-         'The_European_Nopsled_Team': '10.5.7.2',
-         'more_smoked_leet_chicken':'10.5.9.2',
-         'blue_lotus': '10.5.10.2',
-         'routards': '10.5.11.2',
-         'shell_corp': '10.5.12.2',
-         'shellphish': '10.5.13.2',
-         'WOWHacker-BI0S': '10.5.14.2',
-         '9447': '10.5.15.2',
-         'meninblackhats': '10.5.16.2',
-         'clgt': '10.5.3.2',
-         'sutegoma2': '10.5.8.2',
-         'pwingyeti': '10.5.17.2',
-         'Alternatives': '10.5.19.2',
-         'Robot_Mafia': '10.5.20.2',
-         'LegitimateBusinessSyndicate': '10.5.22.2',
-         'APT8': '10.5.18.2'
-}
-## /VARS ##
+# For each day...
+# For every team...
+# For every CSV...
+## For every line...
+## if rate meets a threshold, grab that record and write it to output file
 
-def makeHistograms(inDir): # BROKEN, but don't care
-    print "* Making Histograms..."
-    outDir = inDir+'/histograms/'
-    print "Writing histograms to: " + outDir
+###VARS###
+thresh = 700
+###/VARS###
+
+
+def threshTeam(csvPath, outFile, team):
     
-    try: os.makedirs(outDir)
-    except(OSError): print("Directory exists")
-
-    for infn in os.listdir(inDir):
-        if not os.path.isdir(inDir+infn):
-            f = open(inDir+infn,'r')
-            rates = []
-            outfn = infn.split('.')[0]+'.png'
-            outfnpath = outDir+outfn
-            for line in f: rates.append(float(line.split(',')[4].strip()))
-            bins = range(1,len(rates)+1)
-            print("Making histogram %s" % outfn)
-            fig = plt.bar(bins, rates, width=0.1)
-            plt.title(outfn)
-            plt.ylabel('Rate (pkts/sec)')
-            plt.xlabel('Second')
-
-            try:
-                plt.ylim(0,max(rates))
-                print("Max: %f" % max(rates)) # THIS BROKEN
-            except(ValueError): plt.ylim(0,1000)
-            plt.savefig(outfnpath)
-            
-    print()
-
-def makeCSVTeam(silkPath, team):
-
-    print "** Making CSVs..."
-
+    print("** Analyzing thresholds for team %s ** " % team)
+    outFile.write("*** %s ***\n" % team)
+    
     ## Input Dir
-    inDir = os.getcwd() + '/' + silkPath + '/'
+    inDir = os.getcwd() + '/' + csvPath + '/'
     if not os.path.isdir(inDir):
         print("Error: skipping directory %s" % inDir)
         return
     print("Input directory: " + inDir)
 
+    total = 0.0
+    overThresh = 0.0
+    for fn in os.listdir(inDir):
+        for line in open(inDir+fn,'r'):
+            total+=1
+            if line.split(',')[4] > thresh:
+                outFile.write(line)
+                overThresh+=1
+    outFile.write("Percentage over threshold: %f" % (overThresh/total))
+
+    print
+
+
+def threshDay(csvPath,outFile):
+    for fn in os.listdir(os.getcwd()+csvPath):
+        print fn
+        threshTeam(csvPath+'/'+fn, outFile, fn)
+
+    
+def threshDEFCON(csvPath):
     ## Output Dir
-    outDir = os.getcwd() + '/csvs/' + silkPath[6:] + '/' ##WORKING
-    print("Output directory: " + outDir)
+    outDir = os.getcwd() + '/results/' + csvPath[6:] + '/'
+    print("Output file: " + outDir)
     print("Making output directory...")
     try: os.makedirs(outDir)
     except(OSError): print("Directory exists")
-                
-    print("** Making CSVs for team %s" % team)
-    for fn in os.listdir(inDir):
-         for name,addr in addrs.iteritems():
-             ## Args set up
-             csvfn = "%s--%s.csv" % (team,name)
-             saddress = addrs[team]
-             daddress = addr
-             inAbsPath = inDir+fn
-             outAbsPath = outDir+csvfn
-             ## /Args
 
-             ## Incantation setup
-             rwfiltercmd = ['rwfilter' , '-saddress='+saddress, '-daddress='+daddress,
-                            '--pass-destination=stdout', inAbsPath]             
-             rwfilter = subprocess.Popen(rwfiltercmd, stdout=subprocess.PIPE, shell=False)
-             rwuniqcmd = ['rwuniq', '--plugin=flowrate.so', '--bin-time=1',
-                          '--fields=sip,dip,stime,etime', '--values=pckts/sec', '--sort-output']
-             rwuniq = subprocess.Popen(rwuniqcmd, stdin=rwfilter.stdout,
-                                       stdout=subprocess.PIPE, shell=False)
-             grepcmd = ['grep', '-v', 'sIP']
-             grep = subprocess.Popen(grepcmd, stdin=rwuniq.stdout,
-                                    stdout=subprocess.PIPE, shell=False)
-             sedcmd = ['sed', '--regexp-extended', '--expression=s/\|/\,/g']
-             sed = subprocess.Popen(sedcmd, stdin=grep.stdout,
-                                    stdout=subprocess.PIPE, shell=False)
-             #print("**Executing: %s | %s  " % (str(rwfiltercmd),str(rwuniqcmd)))
-             ## /Incantation
-             
-             ## Execute and save output
-             print("**Writing file: %s..." % outAbsPath)
-             with open(outAbsPath, 'a') as f: f.write(sed.communicate()[0])
-             ##Execute
-
-
-    print
-
-def cleanCSVs():
-    print("**Killing CSVs...")
-    try: shutil.rmtree(os.getcwd()+'/csvs/')
-    except(OSError): print
-    print
-
-
-
-def makeCSVDAY(silkPath):
-    for fn in os.listdir(os.getcwd()+silkPath):
-        print fn
-        makeCSVTeam(silkPath+'/'+fn, fn)
-
+    csvPath += '/pcaps/'
     
-def makeCSVDEFCON(silkPath):
-    silkPath += '/pcaps/'
-    
-    for fn in os.listdir(os.getcwd()+silkPath):
-        makeCSVDAY(silkPath+'/'+fn)
+    for fn in os.listdir(os.getcwd()+csvPath):
+        outfn = outDir+'/'+fn+'-results.txt'
+        print("Making output file: %s" % outfn)
+        outFile = open(outfn, 'w')
+        threshDay(csvPath+'/'+fn, outFile)
 
 
 def main(argv):
@@ -162,13 +85,11 @@ def main(argv):
        print("Usage: python makeFlow.py <DEFCON name>")
        sys.exit(1)
     else:
-        silkPath = '/silk/' + argv[0] + '/'
-        cleanCSVs()
-        #makeCSVDEFCON(silkPath)
-        makeCSVDAY(silkPath)
+        csvPath = '/csvs/' + argv[0] + '/'
+        threshDEFCON(csvPath)
+        #makeCSVDAY(silkPath)
         #makeCSVTeam(silkPath
 
-        #makeHistograms(outDir) # these aren't very helpful...
 
 
 if __name__ == "__main__":
