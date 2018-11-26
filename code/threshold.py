@@ -12,11 +12,34 @@ import getopt
 ## if rate meets a threshold, grab that record and write it to output file
 ###/PSUEDO###
 
-###VARS###
-thresh = 700
-###/VARS###
 
+def setThresh(inDir, outFile):
+    rates = []
+    for fn in os.listdir(inDir):
+        for line in open(inDir+fn,'r'):
+            rate = float(line.split(',')[7])
+            rates.append(rate)
 
+    thresh = mean(rates)+stdev(rates)*2
+    outFile.write("Overall Average: %f\n" % mean(rates))
+    outFile.write("Standard Deviation: %f\n" % stdev(rates))
+    outFile.write("Threshold set to: %f\n" % thresh)
+    return thresh
+
+def overThresh(inDir, outFile, thresh):
+    total = 0.0
+    overThresh = 0.0
+    for fn in os.listdir(inDir):
+        for line in open(inDir+fn,'r'):
+            rate = float(line.split(',')[7])
+            total+=1
+            if float(rate) > thresh:
+                outFile.write(line)
+                overThresh+=1
+
+    outFile.write("Percentage over threshold: %f\n" % (overThresh/total))
+
+    
 def threshTeam(csvPath, outFile, team):
     
     print("** Analyzing thresholds for team %s ** " % team)
@@ -29,21 +52,12 @@ def threshTeam(csvPath, outFile, team):
         return
     print("Input directory: " + inDir)
 
-    total = 0.0
-    overThresh = 0.0
-    rates = []
-    for fn in os.listdir(inDir):
-        for line in open(inDir+fn,'r'):
-            rate = float(line.split(',')[4])
-            rates.append(rate)
-            total+=1
-            if float(rate) > thresh:
-                outFile.write(line)
-                overThresh+=1
-    outFile.write("Percentage over threshold: %f\n" % (overThresh/total))
-    outFile.write("Overall Average: %f\n" % mean(rates))
-    outFile.write("Standard Deviation: %f\n" % stdev(rates))
-
+    #thresh = setThresh(inDir, outFile)
+    #print("Thresh = %f" % thresh)
+    thresh = 1000
+    overThresh(inDir, outFile, thresh)
+    
+    outFile.write("\n\n")
     print
 
 
