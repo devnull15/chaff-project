@@ -1,15 +1,10 @@
-#!/usr/bin/python3.5
 from statistics import mean, stdev
 import os
 import sys
 import getopt
 
 ###PSUEDO###
-# For each day...
-# For every team...
-# For every CSV...
-## For every line...
-## if rate meets a threshold, grab that record and write it to output file
+
 ###/PSUEDO###
 
 
@@ -61,12 +56,12 @@ def threshTeam(csvPath, outFile, team):
     print
 
 
-def threshDay(csvPath,outFile):
+def histoDay(csvPath,outFile):
     for fn in os.listdir(os.getcwd()+csvPath):
         threshTeam(csvPath+'/'+fn, outFile, fn)
 
     
-def threshDEFCON(csvPath):
+def histoDEFCON(csvPath):
     ## Output Dir
     outDir = os.getcwd() + '/results/' + csvPath[6:] + '/'
     print("Output file: " + outDir)
@@ -77,38 +72,20 @@ def threshDEFCON(csvPath):
     csvPath += '/pcaps/'
     
     for fn in os.listdir(os.getcwd()+csvPath):
-        outfn = outDir+'/'+fn+'-results.txt'
+        outfn = outDir+'/'+fn+'-histo.csv'
         print("Making output file: %s" % outfn)
         outFile = open(outfn, 'w')
         threshDay(csvPath+'/'+fn, outFile)
 
 
 def main(argv):
-    # try: opts, args = getopt.getopt(argv,"c:d:t:")
-    # except getopt.GetoptError:
-    #     print("Usage: python makeFlow.py [-c (defcon), -d (day), -t (team)] <relative path>")
-    #     sys.exit(2)
-
-    # print opts
-    # print args
-    # silkPath = '/silk/' + args[0] + '/'
-    # cleanCSVs() # need to fix this so that it doesn't nuke everything
-    # print opts
-    # for opt,arg in opts:
-    #     print opt,arg
-    #     if opt=='--defcon':
-    #         makeCSVDEFCON(silkPath)
-    #     elif opt=='--day':
-    #         makeCSVDAY(silkPath)
-    #     elif opt=='--team':
-    #         makeCSVTeam(silkPath)
     
     if len(argv) is not 1:
        print("Usage: python makeFlow.py <DEFCON name>")
        sys.exit(1)
     else:
         csvPath = '/csvs/' + argv[0] + '/'
-        threshDEFCON(csvPath)
+        histoDEFCON(csvPath)
         #threshDay(csvPath)
         #makeCSVTeam(silkPath
 
